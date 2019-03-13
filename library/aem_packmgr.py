@@ -60,13 +60,14 @@ def _pgk_exist(url, login, password, int_pkg_name):
         return False
     pass
 
-def _pkg_install(url, login, password, file_name, file_path, install=False, strict=True):
-    files = {'file':  (file_name, open(file_path, 'rb'), 'application/zip')}
-    values = {'install': install, 'strict': strict }
+def _pkg_install(url, login, password, file_name , file_path, install=False, strict=True):
+    files = {'file':  (file_name , open(file_path, 'rb'), 'application/zip')}
+    values = {'install': install, 'strict':strict }
     response = requests.post(url+'/crx/packmgr/service.jsp', files=files, data=values, auth=(login, password))
     aem_response = ET.fromstring(response.text)
     print('uload finished')
     if response.status_code == requests.codes.ok :
+        print(response.text)
         int_pkg_name = aem_response.find("response/data/package/name").text
         print ("testing result")
         install_status = requests.post(url+'/crx/packmgr/service.jsp?cmd=inst&name='+int_pkg_name, auth=(login, password))
