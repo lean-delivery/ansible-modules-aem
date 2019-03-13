@@ -14,6 +14,27 @@ short_description: Manage AEM packages
 description:
   - Manage AEM packages
 '''
+EXAMPLES='''
+# Remove package
+    - aem_packmgr:
+        state: absent
+        pkg_name: test-all
+        aem_user: admin
+        aem_passwd: admin
+        aem_url: http://auth01:4502
+
+# Upload and install a package where the file name and package name are different
+    - aem_packmgr:
+        state: present
+        pkg_name: test-all-2.2-SNAPSHOT.zip
+        pkg_path: /home/vagrant/test-all-2.2-SNAPSHOT.zip
+        aem_user: admin
+        aem_passwd: admin
+        aem_url: http://auth01:4502
+
+
+'''
+
 
 import requests
 import xml.etree.ElementTree as ET
@@ -50,7 +71,8 @@ def _pkg_install(url, login, password, file_name, file_path, install=False, stri
         print ("testing result")
         install_status = requests.post(url+'/crx/packmgr/service.jsp?cmd=inst&name='+int_pkg_name, auth=(login, password))
         aem_inst_response = ET.fromstring(install_status.text)
-        if install_status.status_code == requests.codes.ok :
+        #if failure aem send status code 500 with responce status 200
+        if (aem_inst_response.find("response/status").attrib['code']) == '200':
             print('ok')
             return True
         else:
