@@ -26,7 +26,7 @@ EXAMPLES='''
 # Upload and install a package where the file name and package name are different
     - aem_packmgr:
         state: present
-        pkg_name: test-all-2.2-SNAPSHOT.zip
+        pkg_name: test-all
         pkg_path: /home/vagrant/test-all-2.2-SNAPSHOT.zip
         aem_user: admin
         aem_passwd: admin
