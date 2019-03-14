@@ -14,7 +14,7 @@ short_description: Manage AEM packages
 description:
   - Manage AEM packages
 '''
-EXAMPLES='''
+EXAMPLES = '''
 # Remove package
     - aem_packmgr:
         state: absent
@@ -35,13 +35,14 @@ EXAMPLES='''
 
 '''
 
-
-import requests
+import json
 import xml.etree.ElementTree as ET
+import requests
 from ansible.module_utils.basic import *
 
+
 def _pgk_exist(url, login, password, int_pkg_name):
-    response = requests.get(url+'/crx/packmgr/service.jsp?cmd=ls', auth=(login, password))
+    response = requests.get(url + '/crx/packmgr/service.jsp?cmd=ls', auth=(login, password))
     aem_response = ET.fromstring(response.text)
 
     packages_list = []
@@ -58,51 +59,53 @@ def _pgk_exist(url, login, password, int_pkg_name):
     else:
         print('not installed')
         return False
-    pass
 
-def _pkg_install(url, login, password, file_name , file_path, install=False, strict=True):
-    files = {'file':  (file_name , open(file_path, 'rb'), 'application/zip')}
-    values = {'install': install, 'strict':strict }
-    response = requests.post(url+'/crx/packmgr/service.jsp', files=files, data=values, auth=(login, password))
+
+def _pkg_install(url, login, password, file_name, file_path, install=False, strict=True):
+    files = {'file': (file_name, open(file_path, 'rb'), 'application/zip')}
+    values = {'install': install, 'strict': strict}
+    response = requests.post(url + '/crx/packmgr/service.jsp', files=files, data=values, auth=(login, password))
     aem_response = ET.fromstring(response.text)
     print('uload finished')
-    if response.status_code == requests.codes.ok :
+    if response.status_code == requests.codes.ok:
         print(response.text)
         int_pkg_name = aem_response.find("response/data/package/name").text
-        print ("testing result")
-        install_status = requests.post(url+'/crx/packmgr/service.jsp?cmd=inst&name='+int_pkg_name, auth=(login, password))
+        print("testing result")
+        install_status = requests.post(url + '/crx/packmgr/service.jsp?cmd=inst&name=' + int_pkg_name,
+                                       auth=(login, password))
         aem_inst_response = ET.fromstring(install_status.text)
-        #if failure aem send status code 500 with responce status 200
+        # if failure aem send status code 500 with responce status 200
         if (aem_inst_response.find("response/status").attrib['code']) == '200':
             print('ok')
             return True
         else:
             print(json.dumps({
-                "failed" : True,
-                "msg"    : install_status.text
+                "failed": True,
+                "msg": install_status.text
             }))
             _pkg_remove(url, login, password, int_pkg_name)
             return False
     else:
         print(json.dumps({
-            "failed" : True,
-            "msg"    : response.text
+            "failed": True,
+            "msg": response.text
         }))
         return False
-    pass
+
 
 def _pkg_remove(url, login, password, int_pkg_name):
-    response = requests.post(url+'/crx/packmgr/service.jsp?cmd=rm&name='+int_pkg_name, auth=(login, password))
+    response = requests.post(url + '/crx/packmgr/service.jsp?cmd=rm&name='
+                             + int_pkg_name, auth=(login, password))
     aem_response = ET.fromstring(response.text)
 
-    #if failure aem send status code 500 with responce status 200
-    if (aem_response.find("response/status").attrib['code']) == '200' :
+    # if failure aem send status code 500 with responce status 200
+    if (aem_response.find("response/status").attrib['code']) == '200':
         print('ok')
         return True
     else:
         print('fail')
         return False
-    pass
+
 
 def main():
     module = AnsibleModule(
@@ -122,34 +125,27 @@ def main():
     aem_user = module.params.get('aem_user')
     aem_passwd = module.params.get('aem_passwd')
     aem_url = module.params.get('aem_url')
-    aem_force=module.params.get('aem_force')
+    aem_force = module.params.get('aem_force')
     state_changed = False
     message = "no changes"
     pkg_name = module.params.get('pkg_name')
+    pkg_path = module.params.get('pkg_path')
 
-    if state in ['present', 'install']:
-        if aem_force or not _pgk_exist(aem_url, aem_user, aem_passwd, pkg_name):
-            pkg_path = module.params.get('pkg_path')
-            if _pkg_install(aem_url, aem_user, aem_passwd, pkg_name, pkg_path):
-                state_changed = True
-                message = "Installation package " + pkg_name + " was successful"
-                pass
-            else:
-                message = "Installation package " + pkg_name + " is failed"
-                module.fail_json(msg=message)
-            pass
+    if state in ['present'] and (aem_force or not _pgk_exist(aem_url, aem_user, aem_passwd, pkg_name)):
+        if _pkg_install(aem_url, aem_user, aem_passwd, pkg_name, pkg_path):
+            state_changed = True
+            message = "Installation package " + pkg_name + " was successful"
         else:
-            pass
-        pass
-    elif state in ['absent']:
-        if _pgk_exist(aem_url, aem_user, aem_passwd, pkg_name):
-            if _pkg_remove(aem_url, aem_user, aem_passwd, pkg_name):
-                state_changed = True
-                message = "Removing package " + pkg_name + " was successful"
-            else:
-                message = "Removing package " + pkg_name + " is failed"
-                module.fail_json(msg=message)
-        pass
+            message = "Installation package " + pkg_name + " is failed"
+            module.fail_json(msg=message)
+
+    if state in ['absent'] and _pgk_exist(aem_url, aem_user, aem_passwd, pkg_name):
+        if _pkg_remove(aem_url, aem_user, aem_passwd, pkg_name):
+            state_changed = True
+            message = "Removing package " + pkg_name + " was successful"
+        else:
+            message = "Removing package " + pkg_name + " is failed"
+            module.fail_json(msg=message)
 
     module.exit_json(changed=state_changed, msg=message)
 
