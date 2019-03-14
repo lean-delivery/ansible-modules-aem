@@ -29,7 +29,7 @@ EXAMPLES = '''
         aem_passwd: admin
         aem_url: http://auth01:4502
 
-# Upload and install a package 
+# Upload and install a package
     - aem_packmgr:
         state: present
         pkg_name: test-all
