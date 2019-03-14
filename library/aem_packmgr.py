@@ -64,15 +64,30 @@ def _pgk_exist(url, login, password, int_pkg_name):
         return False
 
 
+def _pkg_validate(url, login, password, file_name, file_path):
+    # validation
+    file = {'file': (file_name, open(file_path, 'rb'), 'application/zip')}
+    response = requests.post(
+        url + '/crx/packmgr/service.jsp?cmd=validate&type=osgiPackageI\
+        mports,overlays,acls', files=file, auth=(login, password))
+    print(response.text)
+    aem_response = ET.fromstring(response.text)
+    if (aem_response.find("response/status").attrib['code']) == '200':
+        return True
+    else:
+        return False
+
+
 def _pkg_install(url, login, password, file_name, file_path, install=False,
                  strict=True):
+    # uploading
     files = {'file': (file_name, open(file_path, 'rb'), 'application/zip')}
     values = {'install': install, 'strict': strict}
     response = requests.post(url + '/crx/packmgr/service.jsp', files=files,
                              data=values, auth=(login, password))
     aem_response = ET.fromstring(response.text)
     print('uload finished')
-    if response.status_code == requests.codes.ok:
+    if (aem_response.find("response/status").attrib['code']) == '200':
         print(response.text)
         int_pkg_name = aem_response.find("response/data/package/name").text
         print("testing result")
@@ -122,7 +137,8 @@ def main():
             aem_user=dict(required=True, type='str'),
             aem_passwd=dict(required=True, type='str', no_log=True),
             aem_url=dict(required=True, type='str'),
-            aem_force=dict(default='false', type='bool')
+            aem_force=dict(default='false', type='bool'),
+            pkg_validate=dict(default='false', type='bool')
         ),
         supports_check_mode=False
     )
@@ -132,6 +148,7 @@ def main():
     aem_passwd = module.params.get('aem_passwd')
     aem_url = module.params.get('aem_url')
     aem_force = module.params.get('aem_force')
+    pkg_validate = module.params.get('pkg_validate')
     state_changed = False
     message = "no changes"
     pkg_name = module.params.get('pkg_name')
@@ -140,16 +157,26 @@ def main():
     if state in ['present'] and (
             aem_force or not _pgk_exist(aem_url, aem_user, aem_passwd,
                                         pkg_name)):
+
+        if pkg_validate and not _pkg_validate(aem_url, aem_user, aem_passwd,
+                                              pkg_name, pkg_path):
+            message = "validation of  package " + pkg_name + " is failed"
+            module.fail_json(msg=message)
+
         if _pkg_install(aem_url, aem_user, aem_passwd, pkg_name, pkg_path):
+
             state_changed = True
             message = "Installation package " + pkg_name + " was successful"
         else:
+
             message = "Installation package " + pkg_name + " is failed"
             module.fail_json(msg=message)
 
     if state in ['absent'] and _pgk_exist(aem_url, aem_user, aem_passwd,
                                           pkg_name):
+
         if _pkg_remove(aem_url, aem_user, aem_passwd, pkg_name):
+
             state_changed = True
             message = "Removing package " + pkg_name + " was successful"
         else:
@@ -160,3 +187,4 @@ def main():
 
 
 main()
+
