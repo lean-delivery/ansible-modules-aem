@@ -5,6 +5,12 @@
 # GNU General Public License v3.0+ (see COPYING or
 # https://www.gnu.org/licenses/gpl-3.0.txt)
 
+
+import json
+import xml.etree.ElementTree as ET
+import requests
+from ansible.module_utils.basic import *
+
 __version__ = '1.0.0'
 
 DOCUMENTATION = '''
@@ -34,11 +40,6 @@ EXAMPLES = '''
 
 
 '''
-
-import json
-import xml.etree.ElementTree as ET
-import requests
-from ansible.module_utils.basic import *
 
 
 def _pgk_exist(url, login, password, int_pkg_name):
