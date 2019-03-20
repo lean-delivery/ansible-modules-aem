@@ -16,6 +16,8 @@ __version__ = '1.0.0'
 DOCUMENTATION = '''
 ---
 module: aem_packmgr
+author:
+  - Lean Delivery Team
 short_description: Manage AEM packages
 description:
   - Manage AEM packages
