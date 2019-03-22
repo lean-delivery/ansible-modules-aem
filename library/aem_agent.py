@@ -6,7 +6,9 @@
 # GNU General Public License v3.0+ (see COPYING or
 # https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import requests, HTMLParser
+from ansible.module_utils.basic import *
+import requests
+import HTMLParser
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -31,7 +33,7 @@ options:
         description:
             - Set service of agent
         required: false
-        choices: [enabled, disabled, password]    
+        choices: [enabled, disabled, password]
     name:
         description:
             - agent name
@@ -49,7 +51,7 @@ options:
         description:
             - Agent description
         required: false
-        default: null    
+        default: null
     transport_uri:
         description:
             - Transport URI
@@ -112,33 +114,33 @@ options:
             - Connection close
         required: false
         default: false
-        choices: [true, false]        
+        choices: [true, false]
     connection_timeout:
         description:
             - Connection timeout
         required: false
-        default: null      
+        default: null
     protocol_version:
         description:
             - Protocol version
         required: false
-        default: null      
+        default: null
     batch_mode:
         description:
             - Batch mode
         required: false
         default: false
-        choices: [true, false]        
+        choices: [true, false]
     batch_wait_time:
         description:
             - batch wait time
         required: false
-        default: null      
+        default: null
     batch_max_size:
         description:
             - batch max size
         required: false
-        default: null      
+        default: null
     admin_user:
         description:
             - AEM admin user account name
@@ -146,7 +148,7 @@ options:
     admin_password:
         description:
             - AEM admin user account password
-        required: true    
+        required: true
     host:
         description:
             - Host name where AEM is running
@@ -255,7 +257,7 @@ class AEMAgent(object):
 
         if self.triggers:
             for t in self.triggers:
-                if not t in self.trigger_map:
+                if t not in self.trigger_map:
                     self.module.fail_json(msg="invalid trigger '%s'" % t)
 
     # --------------------------------------------------------------------------------
@@ -290,19 +292,19 @@ class AEMAgent(object):
             if self.description != self.info['jcr:content']['jcr:description']:
                 update_required = True
                 self.msg.append("description updated from '%s' to '%s'" % (
-                self.info['jcr:content']['jcr:description'], self.description))
+                    self.info['jcr:content']['jcr:description'], self.description))
 
             if self.retry_delay != int(self.info['jcr:content']['retryDelay']):
                 update_required = True
                 self.msg.append("retry_delay updated from '%s' to '%s'" % (
-                self.info['jcr:content']['retryDelay'], self.retry_delay))
+                    self.info['jcr:content']['retryDelay'], self.retry_delay))
 
-            if not 'serializationType' in self.info['jcr:content']:
+            if 'serializationType' not in self.info['jcr:content']:
                 self.info['jcr:content']['serializationType'] = ''
             if self.serialization_type != self.info['jcr:content']['serializationType']:
                 update_required = True
                 self.msg.append("serialization_type updated from '%s' to '%s'" % (
-                self.info['jcr:content']['serializationType'], self.serialization_type))
+                    self.info['jcr:content']['serializationType'], self.serialization_type))
 
             if self.template != self.info['jcr:content']['template']:
                 update_required = True
@@ -311,9 +313,9 @@ class AEMAgent(object):
             if self.transport_uri != self.info['jcr:content']['transportUri']:
                 update_required = True
                 self.msg.append("transport_uri updated from '%s' to '%s'" % (
-                self.info['jcr:content']['transportUri'], self.transport_uri))
+                    self.info['jcr:content']['transportUri'], self.transport_uri))
 
-            if not 'transportUser' in self.info['jcr:content']:
+            if 'transportUser' not in self.info['jcr:content']:
                 self.info['jcr:content']['transportUser'] = ''
             if not self.transport_user:
                 self.transport_user = ""
@@ -321,7 +323,7 @@ class AEMAgent(object):
                 update_required = True
                 user_changed = True
                 self.msg.append("transport_user updated from '%s' to '%s'" % (
-                self.info['jcr:content']['transportUser'], self.transport_user))
+                    self.info['jcr:content']['transportUser'], self.transport_user))
 
             else:
                 user_changed = False
@@ -346,28 +348,28 @@ class AEMAgent(object):
                 self.msg.append(
                     "log level updated from '%s' to '%s'" % (self.info['jcr:content']['logLevel'], self.log_level))
 
-            if not 'protocolHTTPConnectionClose' in self.info['jcr:content']:
+            if 'protocolHTTPConnectionClose' not in self.info['jcr:content']:
                 self.info['jcr:content']['protocolHTTPConnectionClose'] = 'false'
             if self.connection_close != self.info['jcr:content']['protocolHTTPConnectionClose']:
                 update_required = True
                 self.msg.append("protocol HTTP close updated from '%s' to '%s'" % (
-                self.info['jcr:content']['protocolHTTPConnectionClose'], self.connection_close))
+                    self.info['jcr:content']['protocolHTTPConnectionClose'], self.connection_close))
 
-            if not 'protocolConnectTimeout' in self.info['jcr:content']:
+            if 'protocolConnectTimeout' not in self.info['jcr:content']:
                 self.info['jcr:content']['protocolConnectTimeout'] = ''
             if self.connect_timeout != self.info['jcr:content']['protocolConnectTimeout']:
                 update_required = True
                 self.msg.append("connection timeout updated from '%s' to '%s'" % (
-                self.info['jcr:content']['protocolConnectTimeout'], self.connect_timeout))
+                    self.info['jcr:content']['protocolConnectTimeout'], self.connect_timeout))
 
-            if not 'protocolVersion' in self.info['jcr:content']:
+            if 'protocolVersion' not in self.info['jcr:content']:
                 self.info['jcr:content']['protocolVersion'] = ''
             if self.protocol_version != self.info['jcr:content']['protocolVersion']:
                 update_required = True
                 self.msg.append("protocol version updated from '%s' to '%s'" % (
-                self.info['jcr:content']['protocolVersion'], self.protocol_version))
+                    self.info['jcr:content']['protocolVersion'], self.protocol_version))
 
-            if not 'userId' in self.info['jcr:content']:
+            if 'userId' not in self.info['jcr:content']:
                 self.info['jcr:content']['userId'] = ''
             if self.agent_user != self.info['jcr:content']['userId']:
                 update_required = True
@@ -375,19 +377,19 @@ class AEMAgent(object):
                     "agent user ID updated from '%s' to '%s'" % (self.info['jcr:content']['userId'], self.agent_user))
 
             if self.serialization_type == 'flush':
-                if not 'protocolHTTPMethod' in self.info['jcr:content']:
+                if 'protocolHTTPMethod' not in self.info['jcr:content']:
                     update_required = True
                     self.msg.append("protocol HTTP method set to '%s'" % ('GET'))
                 elif self.info['jcr:content']['protocolHTTPMethod'] != 'GET':
                     update_required = True
                     self.msg.append("protocol HTTP method updated from '%s' to '%s'" % (
-                    self.info['jcr:content']['protocolHTTPMethod'], 'GET'))
+                        self.info['jcr:content']['protocolHTTPMethod'], 'GET'))
 
                 if self.headers:
                     flush_headers = ','.join(self.headers)
                 else:
                     flush_headers = "CQ-Action:{action},CQ-Handle:{path},CQ-Path:{path}"
-                if not 'protocolHTTPHeaders' in self.info['jcr:content']:
+                if 'protocolHTTPHeaders' not in self.info['jcr:content']:
                     update_required = True
                     self.msg.append("protol HTTP headers'%s'" % (flush_headers))
                 else:
@@ -396,26 +398,26 @@ class AEMAgent(object):
                         update_required = True
                         self.msg.append("protol HTTP headers updated from '%s' to '%s'" % (curr_headers, flush_headers))
 
-            if not 'queueBatchMode' in self.info['jcr:content']:
+            if 'queueBatchMode' not in self.info['jcr:content']:
                 self.info['jcr:content']['queueBatchMode'] = ''
             if self.batch_mode != self.info['jcr:content']['queueBatchMode']:
                 update_required = True
                 self.msg.append("batch mode changed from '%s' to '%s'" % (
-                self.info['jcr:content']['queueBatchMode'], self.batch_mode))
+                    self.info['jcr:content']['queueBatchMode'], self.batch_mode))
 
-            if not 'queueBatchWaitTime' in self.info['jcr:content']:
+            if 'queueBatchWaitTime' not in self.info['jcr:content']:
                 self.info['jcr:content']['queueBatchWaitTime'] = ''
             if self.batch_wait_time != self.info['jcr:content']['queueBatchWaitTime']:
                 update_required = True
                 self.msg.append("batch wait time changed from '%s' to '%s'" % (
-                self.info['jcr:content']['queueBatchWaitTime'], self.batch_wait_time))
+                    self.info['jcr:content']['queueBatchWaitTime'], self.batch_wait_time))
 
-            if not 'queueBatchMaxSize' in self.info['jcr:content']:
+            if 'queueBatchMaxSize' not in self.info['jcr:content']:
                 self.info['jcr:content']['queueBatchMaxSize'] = ''
             if self.batch_max_size != self.info['jcr:content']['queueBatchMaxSize']:
                 update_required = True
                 self.msg.append("batch max size changed from '%s' to '%s'" % (
-                self.info['jcr:content']['queueBatchMaxSize'], self.batch_max_size))
+                    self.info['jcr:content']['queueBatchMaxSize'], self.batch_max_size))
 
             if update_required:
                 if not user_changed:
@@ -652,6 +654,5 @@ def main():
 # --------------------------------------------------------------------------------
 # Ansible boiler plate code.
 # --------------------------------------------------------------------------------
-from ansible.module_utils.basic import *
 
 main()

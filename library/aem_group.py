@@ -6,6 +6,7 @@
 # GNU General Public License v3.0+ (see COPYING or
 # https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from ansible.module_utils.basic import *
 import requests
 
 DOCUMENTATION = '''
@@ -16,8 +17,8 @@ description:
     - Create, modify, delete and manage permissions AEM groups
 author: Paul Markham
 contributors: Lean Delivery Team
-notes:  
-        - This module does group management. 
+notes:
+        - This module does group management.
 options:
     id:
         description:
@@ -43,12 +44,12 @@ options:
         description:
             - List of parent group.
         required: False
-        default: null    
+        default: null
     permissions:
         description:
             - Set of permissions for group.
         required: False
-        default: null    
+        default: null
     admin_user:
         description:
             - AEM admin user account name
@@ -69,7 +70,7 @@ options:
 
 EXAMPLES = '''
 # Create a group
-- aem_group: 
+- aem_group:
     id: sysadmin
     name: 'Systems Administrators'
     groups: 'administrators'
@@ -81,11 +82,11 @@ EXAMPLES = '''
         - everyone
     permissions:
         - 'path:/,read:true'
-        - 'path:/etc/packages,read:true,modify:true,create:true,delete:false,replicate:true'    
+        - 'path:/etc/packages,read:true,modify:true,create:true,delete:false,replicate:true'
     state: present
 
 # Delete a group
-- aem_group: 
+- aem_group:
     id: devs
     host: 'http://example.com'
     port: 4502
@@ -183,10 +184,10 @@ class AEMGroup(object):
                 for hit in info['hits']:
                     self.root_groups_path.append(hit['jcr:path'])
 
-
     # --------------------------------------------------------------------------------
     # state='present'
     # --------------------------------------------------------------------------------
+
     def present(self):
         if self.exists:
             # Update existing group
@@ -258,7 +259,10 @@ class AEMGroup(object):
         if not self.module.check_mode and self.groups:
             for group in self.groups:
                 fields['memberEntry'] = group
-                r = requests.post(self.url + '%s' % self.path, auth=self.auth, files={"memberAction": "addMembers", "memberEntry": "administrators"})
+                r = requests.post(self.url + '%s' % self.path, auth=self.auth,
+                                  files={
+                                      "memberAction": "addMembers",
+                                      "memberEntry": "administrators"})
             if r.status_code != 200:
                 self.module.fail_json(msg='failed to update groups: %s - %s' % (r.status_code, r.text))
         self.changed = True
@@ -275,7 +279,7 @@ class AEMGroup(object):
                 if r.status_code != 200:
                     self.module.fail_json(msg='failed to add to root group: %s - %s' % (r.status_code, r.text))
                 self.msg.append("group added to '%s'" % root_group_path)
-            #if len(set(self.curr_root_groups).symmetric_difference(self.root_groups)) > 0:
+            # if len(set(self.curr_root_groups).symmetric_difference(self.root_groups)) > 0:
             #    self.changed = True
 
     # --------------------------------------------------------------------------------
@@ -350,5 +354,4 @@ def main():
 # --------------------------------------------------------------------------------
 # Ansible boiler plate code.
 # --------------------------------------------------------------------------------
-from ansible.module_utils.basic import *
 main()

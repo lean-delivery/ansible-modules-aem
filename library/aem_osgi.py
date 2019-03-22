@@ -239,11 +239,11 @@ class AEMOsgi(object):
         for f, d in self.factory_instances.iteritems():
             v_match = 0
             for k, v in self.value.iteritems():
-                if type(v) is int:
+                if isinstance(v, int):
                     v = str(v)
                 # Lists are returned from Configurations.txt without surround\
                 # ing quotes
-                if type(v) is list:
+                if isinstance(v, list):
                     v = str(v).replace("'", "")
                 if v == d[k]:
                     v_match += 1
@@ -273,7 +273,7 @@ class AEMOsgi(object):
         fields.append(('action', 'ajaxConfigManager'))
         fields.append(('factoryPid', self.id))
         for k, v in self.value.iteritems():
-            if type(v) is list:
+            if isinstance(v, list):
                 for vv in v:
                     fields.append((k, vv))
             else:
@@ -332,10 +332,10 @@ class AEMOsgi(object):
         else:
             do_update = False
             if type(self.curr_props[self.property][
-                        self.modevalue.get(self.osgimode)]) not in (
+                self.modevalue.get(self.osgimode)]) not in (
                     int, bool, str, unicode):
                 current = sorted(self.curr_props[self.property][
-                                     self.modevalue.get(self.osgimode)])
+                    self.modevalue.get(self.osgimode)])
             else:
                 current = self.curr_props[self.property][
                     self.modevalue.get(self.osgimode)]
@@ -398,8 +398,8 @@ class AEMOsgi(object):
                 if i == self.property:
                     if self.osgimode == 'arrayappend':
                         for new_item_value in self.value:
-                          if new_item_value not in value:
-                            value.append(new_item_value) 
+                            if new_item_value not in value:
+                                value.append(new_item_value)
 #                        value.extend(self.value)
                     else:
                         value = self.value

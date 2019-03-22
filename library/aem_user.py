@@ -6,6 +6,7 @@
 # GNU General Public License v3.0+ (see COPYING or
 # https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from ansible.module_utils.basic import *
 import json
 import requests
 import random
@@ -72,7 +73,7 @@ options:
 
 EXAMPLES = '''
 # Create a user
-- aem_user: 
+- aem_user:
     id: bbaggins
     first_name: Bilbo
     last_name: Baggins
@@ -85,7 +86,7 @@ EXAMPLES = '''
     state: present
 
 # Delete a user
-- aem_user: 
+- aem_user:
     id: golum
     port: 4502
     admin_user: admin
@@ -347,6 +348,5 @@ def main():
 # --------------------------------------------------------------------------------
 # Ansible boiler plate code.
 # --------------------------------------------------------------------------------
-from ansible.module_utils.basic import *
 
 main()
