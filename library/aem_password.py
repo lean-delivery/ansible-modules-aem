@@ -11,6 +11,7 @@
 # Note: you must supply both the old and new passwords for this to work
 
 
+from ansible.module_utils.basic import *
 import requests
 
 DOCUMENTATION = '''
@@ -51,7 +52,7 @@ options:
 
 EXAMPLES = '''
 # Change admin password from default
-- aem_password: 
+- aem_password:
     id: admin
     old_password: admin
     new_password: S3cr3t
@@ -183,5 +184,4 @@ def main():
 # --------------------------------------------------------------------------------
 # Ansible boiler plate code.
 # --------------------------------------------------------------------------------
-from ansible.module_utils.basic import *
 main()
