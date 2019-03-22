@@ -129,8 +129,7 @@ def _pkg_install(url, login, password, file_name, file_path, install=False,
 
 
 def _pkg_remove(url, login, password, int_pkg_name):
-    response = requests.post(url + '/crx/packmgr/service.jsp?cmd=rm&name='
-                             + int_pkg_name, auth=(login, password))
+    response = requests.post(url + '/crx/packmgr/service.jsp?cmd=rm&name=' + int_pkg_name, auth=(login, password))
     aem_response = ET.fromstring(response.text)
 
     # if failure aem send status code 500 with responce status 200

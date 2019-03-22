@@ -119,7 +119,8 @@ class AEMPrimarySync(object):
         found = 0
         while True:
             line = f.stdout.readline()
-            if re.match(".*org.apache.jackrabbit.oak.plugins.segment.standby.store.CommunicationObserver got message 'h' from client.*", line):
+            if re.match(".*org.apache.jackrabbit.oak.plugins.segment.standby.store.CommunicationObserver got message 'h' from client.*",
+                        line):
                 found += 1
                 if found >= self.count:
                     self.msg.append('Found %d matching lines' % (found))
