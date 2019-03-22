@@ -6,6 +6,7 @@
 # GNU General Public License v3.0+ (see COPYING or
 # https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from ansible.module_utils.basic import *
 import sys
 import os
 import platform
@@ -21,7 +22,7 @@ import re
 DOCUMENTATION = '''
 ---
 module: aemstanbysync
-short_description: Manage auth standby sync 
+short_description: Manage auth standby sync
 description:
     - Manage standby sync service
 author: Paul Markham
@@ -67,7 +68,7 @@ options:
 
 '''
 
-EXAMPLES='''
+EXAMPLES = '''
 # Stop sync service
 - aemstandbysync: state=stopped
                   host=auth01
@@ -92,17 +93,19 @@ EXAMPLES='''
 # --------------------------------------------------------------------------------
 # AEMStandbySync class.
 # --------------------------------------------------------------------------------
+
+
 class AEMStandBySync(object):
     def __init__(self, module):
-        self.module         = module
-        self.state          = self.module.params['state']
-        self.admin_user     = self.module.params['admin_user']
+        self.module = module
+        self.state = self.module.params['state']
+        self.admin_user = self.module.params['admin_user']
         self.admin_password = self.module.params['admin_password']
-        self.host           = self.module.params['host']
-        self.port           = self.module.params['port']
-        self.lag            = self.module.params['lag']
-        self.timeout        = self.module.params['timeout']
-        
+        self.host = self.module.params['host']
+        self.port = self.module.params['port']
+        self.lag = self.module.params['lag']
+        self.timeout = self.module.params['timeout']
+
         self.changed = False
         self.msg = []
 
@@ -112,23 +115,23 @@ class AEMStandBySync(object):
         self.sync_secs = 0
         self.get_sync_state()
 
-
     # --------------------------------------------------------------------------------
     # Look up sync info.
     # --------------------------------------------------------------------------------
+
     def get_sync_state(self):
         start_time = time.time()
         while True:
             now = time.time()
             if now - start_time > self.timeout:
-                 self.module.fail_json(msg="Waited more than %d seconds to get JMX configuration -- timed out" % (self.timeout))
+                self.module.fail_json(msg="Waited more than %d seconds to get JMX configuration -- timed out" % (self.timeout))
             (status, output) = self.http_request('GET', '/system/console/jmx')
             if status == 200:
                 break
             else:
                 time.sleep(10)
 
-        matches = 0;
+        matches = 0
         for line in output.split('\n'):
             if re.match('.*Standby.*', line):
                 matches = matches + 1
@@ -162,13 +165,13 @@ class AEMStandBySync(object):
             self.module.fail_json(msg="Couldn't determine failed requests: Got '%d'" % (self.failed_requests))
         if self.sync_secs is None:
             self.module.fail_json(msg="Couldn't determine seconds since last sync: Got '%d'" % (self.sync_secs))
-        if not self.sync_state in ['running', 'stopped', 'initializing']:
+        if self.sync_state not in ['running', 'stopped', 'initializing']:
             self.module.fail_json(msg="Couldn't determine sync state: Got '%s'" % (self.sync_state))
-
 
     # --------------------------------------------------------------------------------
     # state='started'
     # --------------------------------------------------------------------------------
+
     def started(self):
         if self.sync_state == 'running':
             self.msg.append('sync already started')
@@ -183,10 +186,10 @@ class AEMStandBySync(object):
             self.msg.append('sync started')
             self.changed = True
 
-
     # --------------------------------------------------------------------------------
     # state='stopped'
     # --------------------------------------------------------------------------------
+
     def stopped(self):
         if self.sync_state == 'stopped':
             self.msg.append('sync already stopped')
@@ -223,8 +226,8 @@ class AEMStandBySync(object):
     # --------------------------------------------------------------------------------
     # Issue http request.
     # --------------------------------------------------------------------------------
-    def http_request(self, method, url, fields = None):
-        headers = {'Authorization' : 'Basic ' + base64.b64encode(self.admin_user + ':' + self.admin_password)}
+    def http_request(self, method, url, fields=None):
+        headers = {'Authorization': 'Basic ' + base64.b64encode(self.admin_user + ':' + self.admin_password)}
         if fields:
             data = urllib.urlencode(fields)
             headers['Content-type'] = 'application/x-www-form-urlencoded'
@@ -239,10 +242,10 @@ class AEMStandBySync(object):
         output = resp.read()
         return (resp.status, output)
 
-
     # --------------------------------------------------------------------------------
     # Return status and msg to Ansible.
     # --------------------------------------------------------------------------------
+
     def exit_msg(self):
         msg = ','.join(self.msg)
         self.module.exit_json(changed=self.changed, msg=msg)
@@ -253,23 +256,23 @@ class AEMStandBySync(object):
 # --------------------------------------------------------------------------------
 def main():
     module = AnsibleModule(
-        argument_spec      = dict(
-            state          = dict(required=True, choices=['started', 'stopped', 'synced']),
-            admin_user     = dict(required=True),
-            admin_password = dict(required=True, no_log=True),
-            host           = dict(required=True),
-            port           = dict(required=True),
-            lag            = dict(default=10, type='int'),
-            timeout        = dict(default=3600, type='int'),
-            wait           = dict(default=0, type='int'),
-            ),
+        argument_spec=dict(
+            state=dict(required=True, choices=['started', 'stopped', 'synced']),
+            admin_user=dict(required=True),
+            admin_password=dict(required=True, no_log=True),
+            host=dict(required=True),
+            port=dict(required=True),
+            lag=dict(default=10, type='int'),
+            timeout=dict(default=3600, type='int'),
+            wait=dict(default=0, type='int'),
+        ),
         supports_check_mode=True
-        )
+    )
 
     time.sleep(int(module.params['wait']))
 
     sync = AEMStandBySync(module)
-    
+
     state = module.params['state']
 
     if state == 'started':
@@ -283,8 +286,8 @@ def main():
 
     sync.exit_msg()
 
+
 # --------------------------------------------------------------------------------
 # Ansible boiler plate code.
 # --------------------------------------------------------------------------------
-from ansible.module_utils.basic import *
 main()

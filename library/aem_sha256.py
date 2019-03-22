@@ -8,31 +8,32 @@
 
 # Hash a password to a SHA256, base 64 encoded value. Return it as an Ansible fact
 
+from ansible.module_utils.basic import *
 import sys
 import os
 import hashlib
 import base64
 
+
 def main():
     module = AnsibleModule(
-        argument_spec  = dict(
-            user      = dict(required=True),
-            password  = dict(required=True, no_log=True),
-            ),
+        argument_spec=dict(
+            user=dict(required=True),
+            password=dict(required=True, no_log=True),
+        ),
         supports_check_mode=True
-        )
+    )
 
     hash = base64.b64encode(hashlib.sha256(module.params['password']).digest())
     key = '%s_password_sha256' % module.params['user']
     facts = {
-        key : hash
+        key: hash
     }
 
-    module.exit_json(ansible_facts = facts)
+    module.exit_json(ansible_facts=facts)
 
 
 # --------------------------------------------------------------------------------
 # Ansible boiler plate code.
 # --------------------------------------------------------------------------------
-from ansible.module_utils.basic import *
 main()

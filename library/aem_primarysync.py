@@ -6,6 +6,7 @@
 # GNU General Public License v3.0+ (see COPYING or
 # https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from ansible.module_utils.basic import *
 import sys
 import os
 import platform
@@ -67,8 +68,8 @@ options:
 
 '''
 
-EXAMPLES='''
-# Wait for sync 
+EXAMPLES = '''
+# Wait for sync
 - aemprimarysync: state=synced
           host=auth01
           port=4502
@@ -78,18 +79,20 @@ EXAMPLES='''
 # --------------------------------------------------------------------------------
 # AEMUser class.
 # --------------------------------------------------------------------------------
+
+
 class AEMPrimarySync(object):
     def __init__(self, module):
-        self.module         = module
-        self.state          = self.module.params['state']
-        self.admin_user     = self.module.params['admin_user']
+        self.module = module
+        self.state = self.module.params['state']
+        self.admin_user = self.module.params['admin_user']
         self.admin_password = self.module.params['admin_password']
-        self.host           = self.module.params['host']
-        self.port           = self.module.params['port']
-        self.log            = self.module.params['log']
-        self.count          = self.module.params['count']
-        self.timeout        = self.module.params['timeout']
-        
+        self.host = self.module.params['host']
+        self.port = self.module.params['port']
+        self.log = self.module.params['log']
+        self.count = self.module.params['count']
+        self.timeout = self.module.params['timeout']
+
         self.changed = False
         self.msg = []
 
@@ -127,10 +130,10 @@ class AEMPrimarySync(object):
             if now - start_time > self.timeout:
                 self.module.fail_json(msg="Waited more than %d seconds -- timed out" % (self.timeout))
 
-
     # --------------------------------------------------------------------------------
     # Return status and msg to Ansible.
     # --------------------------------------------------------------------------------
+
     def exit_msg(self):
         msg = ','.join(self.msg)
         self.module.exit_json(changed=self.changed, msg=msg)
@@ -141,21 +144,21 @@ class AEMPrimarySync(object):
 # --------------------------------------------------------------------------------
 def main():
     module = AnsibleModule(
-        argument_spec      = dict(
-            state          = dict(required=True, choices=['started', 'stopped', 'synced']),
-            admin_user     = dict(required=True),
-            admin_password = dict(required=True, no_log=True),
-            host           = dict(required=True),
-            port           = dict(required=True, type='int'),
-            log            = dict(default="/opt/adobecq/crx-quickstart/logs/standby.log"),
-            count          = dict(default=3, type='int'),
-            timeout        = dict(default=3600, type='int'),
-            ),
+        argument_spec=dict(
+            state=dict(required=True, choices=['started', 'stopped', 'synced']),
+            admin_user=dict(required=True),
+            admin_password=dict(required=True, no_log=True),
+            host=dict(required=True),
+            port=dict(required=True, type='int'),
+            log=dict(default="/opt/adobecq/crx-quickstart/logs/standby.log"),
+            count=dict(default=3, type='int'),
+            timeout=dict(default=3600, type='int'),
+        ),
         supports_check_mode=True
-        )
+    )
 
     sync = AEMPrimarySync(module)
-    
+
     state = module.params['state']
 
     if state == 'synced':
@@ -165,8 +168,8 @@ def main():
 
     sync.exit_msg()
 
+
 # --------------------------------------------------------------------------------
 # Ansible boiler plate code.
 # --------------------------------------------------------------------------------
-from ansible.module_utils.basic import *
 main()
