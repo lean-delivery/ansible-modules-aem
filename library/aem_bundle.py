@@ -6,6 +6,8 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import requests
+from ansible.module_utils.basic import *
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -74,8 +76,8 @@ class AEMBundle(object):
     """docstring for AEMBundle"""
 
     def __init__(self, arg):
-        super(AEMBundle, self).__init__()
-        self.arg = arg
+        # super(AEMBundle, self).__init__()
+        self.module = arg
         self.name = self.module.params['name']
         self.action = self.module.params['action']
         self.admin_user = self.module.params['admin_user']
@@ -92,7 +94,7 @@ class AEMBundle(object):
                                          self.admin_password))
         if aem_request.status_code == 200:
             self.exists = True
-            if aem_request.json['data'][0]['state'] == 'Active':
+            if aem_request.json()['data'][0]['state'] == 'Active':
                 self.active = True
             else:
                 self.active = False
@@ -109,11 +111,27 @@ class AEMBundle(object):
         if aem_request.status_code != 200:
             self.module.fail_json(
                 msg='failed to perform %s action on %s bundle - %s' %
-                (self.action, aem_request.status_code, aem_request.json))
+                (self.action, aem_request.status_code, aem_request.json()))
         self.changed = True
         self.msg.append(
             'action %s was performmed on bundle %s' %
             (self.action, self.name))
+
+    def apply_task(self):
+        if self.exists:
+            if self.action == 'start':
+                if not self.active:
+                    self.do_action()
+
+            elif self.action == 'stop':
+                if self.active:
+                    self.do_action()
+
+            else:
+                self.do_action()
+
+        else:
+            self.module.fail_json(msg="can't find bundle '%s'" % (self.name))
 
     def show_message(self):
         if self.changed:
@@ -142,9 +160,8 @@ def main():
     )
 
     bundle = AEMBundle(module)
-    bundle.do_action()
+    bundle.apply_task()
     bundle.show_message()
 
 
-# <<INCLUDE_ANSIBLE_MODULE_COMMON>>
 main()
