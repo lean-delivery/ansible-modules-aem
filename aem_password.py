@@ -79,8 +79,6 @@ class AEMPassword(object):
         self.msg = []
         self.id_initial = self.id[0]
 
-        self.aem61 = True
-
         self.get_user_info()
 
     # --------------------------------------------------------------------------------
@@ -90,14 +88,9 @@ class AEMPassword(object):
     def get_user_info(self):
         # check if new password is already valid
         self.msg.append('checking new password')
-        if self.aem61:
-            r = requests.get(self.url + '/bin/querybuilder.json?path=/home/users&'
-                                        '1_property=rep:authorizableId&1_property.value=%s&p.limit=-1'
-                             % self.id, auth=(self.id, self.new_password))
-        else:
-            r = requests.get(self.url + '/home/users/%s/%s.rw.json?props=*'
-                             % (self.id_initial, self.id), auth=(self.id, self.new_password))
-        if r.status_code == 200:
+        r = requests.get(self.url + '/bin/querybuilder.json?path=/home/users&1_property=rep:authorizableId&'
+                                    '1_property.value=%s&p.limit=-1' % self.id, auth=(self.id, self.new_password))
+        if r.status_code == 200 and len(r.json()['hits']):
             self.msg.append("password doesn't need to be changed")
             self.exit_status()
 
@@ -105,14 +98,9 @@ class AEMPassword(object):
         old_password_valid = False
         for password in self.old_password_list:
             self.msg.append('checking password "%s"' % password)
-            if self.aem61:
-                r = requests.get(self.url + '/bin/querybuilder.json?path=/home/users&1_property=rep:authorizableId&'
-                                            '1_property.value=%s&p.limit=-1'
-                                 % self.id, auth=(self.id, password))
-            else:
-                r = requests.get(self.url + '/home/users/%s/%s.rw.json?props=*'
-                                 % (self.id_initial, self.id), auth=(self.id, password))
-            if r.status_code == 200:
+            r = requests.get(self.url + '/bin/querybuilder.json?path=/home/users&1_property=rep:authorizableId&'
+                                        '1_property.value=%s&p.limit=-1' % self.id, auth=(self.id, password))
+            if r.status_code == 200 and len(r.json()['hits']):
                 old_password_valid = True
                 self.old_password = password
                 break
@@ -128,21 +116,14 @@ class AEMPassword(object):
     # --------------------------------------------------------------------------------
     def set_password(self):
         if not self.module.check_mode:
-            if self.aem61:
-                fields = [
-                    ('plain', self.new_password),
-                    ('verify', self.new_password),
-                    ('old', self.old_password),
-                ]
-                r = requests.post(self.url + '/crx/explorer/ui/setpassword.jsp',
-                                  auth=(self.id, self.old_password), data=fields)
-            else:
-                fields = [
-                    (':currentPassword', self.old_password),
-                    ('rep:password', self.new_password),
-                ]
-                r = requests.post(self.url + '/home/users/%s/%s.rw.html'
-                                  % (self.id_initial, self.id), auth=(self.id, self.old_password), data=fields)
+            fields = [
+                ('plain', self.new_password),
+                ('verify', self.new_password),
+                ('old', self.old_password),
+            ]
+            r = requests.post(self.url + '/crx/explorer/ui/setpassword.jsp',
+                              auth=(self.id, self.old_password), data=fields)
+
             if r.status_code != 200:
                 self.module.fail_json(msg='failed to change password: %s - %s' % (r.status_code, r.text))
         self.changed = True
@@ -163,10 +144,8 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             id=dict(required=True),
-            new_password=dict(required=True, no_log=True),
-            old_password=dict(required=True, type='list', no_log=True),
-            admin_user=dict(required=False),  # no longer needed
-            admin_password=dict(required=False, no_log=True),  # no longer needed
+            new_password=dict(required=True, no_log=False),
+            old_password=dict(required=True, type='list', no_log=False),
             host=dict(required=True),
             port=dict(required=True, type='int'),
             ignore_err=dict(default=False, type='bool'),
