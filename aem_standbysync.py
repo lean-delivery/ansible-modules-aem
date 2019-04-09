@@ -7,15 +7,7 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from ansible.module_utils.basic import *
-import sys
-import os
-import platform
-import httplib
-import urllib
-import base64
-import json
-import string
-import random
+import requests
 import re
 
 
@@ -105,6 +97,8 @@ class AEMStandBySync(object):
         self.port = self.module.params['port']
         self.lag = self.module.params['lag']
         self.timeout = self.module.params['timeout']
+        self.auth = (self.admin_user, self.admin_password)
+        self.burl = self.host + ':' + self.port
 
         self.changed = False
         self.msg = []
@@ -125,14 +119,14 @@ class AEMStandBySync(object):
             now = time.time()
             if now - start_time > self.timeout:
                 self.module.fail_json(msg="Waited more than %d seconds to get JMX configuration -- timed out" % (self.timeout))
-            (status, output) = self.http_request('GET', '/system/console/jmx')
-            if status == 200:
+            r = requests.get(self.burl + '/system/console/jmx')
+            if r.status_code == 200:
                 break
             else:
                 time.sleep(10)
 
         matches = 0
-        for line in output.split('\n'):
+        for line in r.text.split('\n'):
             if re.match('.*Standby.*', line):
                 matches = matches + 1
                 standby_line = line
@@ -145,13 +139,13 @@ class AEMStandBySync(object):
         else:
             self.module.fail_json(msg="Couldn't find standby url in line '%s'" % (standby_line))
 
-        (status, output) = self.http_request('GET', self.url)
-        if status != 200:
-            self.module.fail_json(msg="Error getting standby configuration. status=%s output=%s" % (status, output))
+        r = requests.get(self.burl + self.url)
+        if r.status_code != 200:
+            self.module.fail_json(msg="Error getting standby configuration. status=%s output=%s" % (r.status_code, r.text))
         self.sync_state = ''
         self.sync_secs = None
         self.failed_requests = None
-        for line in output.split('\n'):
+        for line in r.text.split('\n'):
             m = re.match("^.*'>FailedRequests<.*<td data-type='int'>(.*)</td>.*", line)
             if m:
                 self.failed_requests = int(m.group(1))
@@ -177,9 +171,9 @@ class AEMStandBySync(object):
             self.msg.append('sync already started')
         else:
             if not self.module.check_mode:
-                (status, output) = self.http_request('POST', self.url + '/op/start/')
-                if status != 200:
-                    self.module.fail_json(msg="Error starting sync. status=%s output=%s" % (status, output))
+                r = requests.post(self.burl + self.url + '/op/start/')
+                if r.status_code != 200:
+                    self.module.fail_json(msg="Error starting sync. status=%s output=%s" % (r.status_code, r.text))
                 self.get_sync_state()
                 if self.sync_state != 'running':
                     self.module.fail_json(msg="Failed to start sync")
@@ -195,9 +189,9 @@ class AEMStandBySync(object):
             self.msg.append('sync already stopped')
         else:
             if not self.module.check_mode:
-                (status, output) = self.http_request('POST', self.url + '/op/stop/')
-                if status != 200:
-                    self.module.fail_json(msg="Error starting sync. status=%s output=%s" % (status, output))
+                r = requests.post(self.burl + self.url + '/op/stop/')
+                if r.status_code != 200:
+                    self.module.fail_json(msg="Error starting sync. status=%s output=%s" % (r.status_code, r.text))
                 self.get_sync_state()
                 if self.sync_state != 'stopped':
                     self.module.fail_json(msg="Failed to stop sync")
@@ -222,25 +216,6 @@ class AEMStandBySync(object):
                 time.sleep(10)
                 self.get_sync_state()
             self.msg.append('standby synced')
-
-    # --------------------------------------------------------------------------------
-    # Issue http request.
-    # --------------------------------------------------------------------------------
-    def http_request(self, method, url, fields=None):
-        headers = {'Authorization': 'Basic ' + base64.b64encode(self.admin_user + ':' + self.admin_password)}
-        if fields:
-            data = urllib.urlencode(fields)
-            headers['Content-type'] = 'application/x-www-form-urlencoded'
-        else:
-            data = None
-        conn = httplib.HTTPConnection(self.host + ':' + self.port)
-        try:
-            conn.request(method, url, data, headers)
-        except Exception as e:
-            self.module.fail_json(msg="http request '%s %s' failed: %s" % (method, url, e))
-        resp = conn.getresponse()
-        output = resp.read()
-        return (resp.status, output)
 
     # --------------------------------------------------------------------------------
     # Return status and msg to Ansible.
