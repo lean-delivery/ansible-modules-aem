@@ -8,7 +8,10 @@
 
 from ansible.module_utils.basic import *
 import requests
-import HTMLParser
+try:
+    import HTMLParser
+except ImportError:
+    from html.parser import HTMLParser
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
