@@ -249,7 +249,7 @@ class AEMAgent(object):
                             'ignore_default': 'triggerSpecific',
                             }
         self.field_map = {}
-        for key, value in self.trigger_map.iteritems():
+        for key, value in self.trigger_map.items():
             self.field_map[value] = key
 
         if self.triggers:
@@ -521,7 +521,7 @@ class AEMAgent(object):
                 trigger_setting[t] = 'false'
             for t in self.triggers:
                 trigger_setting[t] = 'true'
-            for k, v in trigger_setting.iteritems():
+            for k, v in trigger_setting.items():
                 fields.append(('jcr:content/%s' % self.trigger_map[k], v))
         if not self.module.check_mode:
             r = requests.post(self.url + '/etc/replication/%s/%s' % (self.folder, self.name), auth=self.auth,

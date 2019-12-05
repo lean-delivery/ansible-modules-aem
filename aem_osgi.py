@@ -236,9 +236,9 @@ class AEMOsgi(object):
     def find_factory_match(self):
         f_match = 0
         factory = ''
-        for f, d in self.factory_instances.iteritems():
+        for f, d in self.factory_instances.items():
             v_match = 0
-            for k, v in self.value.iteritems():
+            for k, v in self.value.items():
                 if isinstance(v, int):
                     v = str(v)
                 # Lists are returned from Configurations.txt without surround\
@@ -272,7 +272,7 @@ class AEMOsgi(object):
         fields.append(('apply', 'true'))
         fields.append(('action', 'ajaxConfigManager'))
         fields.append(('factoryPid', self.id))
-        for k, v in self.value.iteritems():
+        for k, v in self.value.items():
             if isinstance(v, list):
                 for vv in v:
                     fields.append((k, vv))
