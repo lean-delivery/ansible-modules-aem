@@ -31,10 +31,11 @@ EXAMPLES = '''
         aem_passwd: admin
         aem_url: http://auth01:4502
 
-# Upload and install a package :
+# Upload and install a package , forced to reinstall:
     - aem_packmgr:
         state: present
         pkg_name: test-all
+        aem_force: true
         pkg_path: /home/vagrant/test-all-2.2-SNAPSHOT.zip
         aem_user: admin
         aem_passwd: admin
