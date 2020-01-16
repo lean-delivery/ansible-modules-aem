@@ -144,8 +144,8 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             id=dict(required=True),
-            new_password=dict(required=True, no_log=False),
-            old_password=dict(required=True, type='list', no_log=False),
+            new_password=dict(required=True, no_log=True),
+            old_password=dict(required=True, type='list', no_log=True),
             host=dict(required=True),
             port=dict(required=True, type='int'),
             ignore_err=dict(default=False, type='bool'),
